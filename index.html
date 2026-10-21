@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VoxelCraft: Ultimate Survival</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <h2>Đang tải VoxelCraft: Ultimate Survival...</h2>
+        <p id="loading-status">Đang khởi tạo engine 3D...</p>
+    </div>
+
+    <div id="canvas-container"></div>
+    <div id="crosshair" class="hidden"></div>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+        <div id="stats-bar">
+            <div class="stat-group">❤️ <span id="hp-val">20</span>/20</div>
+            <div class="stat-group">🍖 <span id="food-val">20</span>/20</div>
+            <div class="stat-group">⏰ <span id="time-val">06:00</span></div>
+            <div class="stat-group">FPS: <span id="fps-val">60</span></div>
+        </div>
+        <div id="hotbar-container">
+            <div id="hotbar" class="hud-interactive"></div>
+        </div>
+    </div>
+
+    <!-- Mobile Touch Controls -->
+    <div id="mobile-controls">
+        <div id="joystick-base"><div id="joystick-stick"></div></div>
+        <div id="btn-jump" class="touch-btn">nhảy</div>
+        <div id="btn-action" class="touch-btn">Đặt</div>
+        <div id="btn-break" class="touch-btn">Phá</div>
+        <div id="btn-inv" class="touch-btn hud-interactive">🎒</div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="main-menu" class="screen">
+        <h1>VoxelCraft: Ultimate Survival</h1>
+        <button class="btn" onclick="game.startWorld(false)">Chơi Mới (Sinh Tồn)</button>
+        <button class="btn" onclick="game.startWorld(true)">Tiếp Tục Thế Giới</button>
+        <button class="btn" onclick="game.openSettings()">Cài Đặt</button>
+        <p style="margin-top: 20px; color: #888; font-size: 0.9rem;">Hỗ trợ PC (WASD + Chuột) và Android (Cảm ứng trực tiếp)</p>
+    </div>
+
+    <!-- Pause Menu -->
+    <div id="pause-menu" class="screen hidden">
+        <h2>Tạm Dừng</h2>
+        <button class="btn" onclick="game.resumeGame()">Tiếp Tục</button>
+        <button class="btn" onclick="game.openInventory()">Kho Đồ / Chế Tạo</button>
+        <button class="btn" onclick="game.saveGameManually()">Lưu Thế Giới</button>
+        <button class="btn" onclick="game.returnToMenu()">Thoát Về Menu</button>
+    </div>
+
+    <!-- Inventory / Crafting Modal -->
+    <div id="inventory-screen" class="screen hidden">
+        <div class="window-box hud-interactive">
+            <h3>Kho Đồ & Chế Tạo</h3>
+            <div id="inv-grid-container" class="inventory-grid"></div>
+            <h4>Chế Tạo Nhanh</h4>
+            <div id="crafting-grid-container" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+            <button class="btn" style="align-self: center; margin-top: 10px;" onclick="game.closeInventory()">Đóng</button>
+        </div>
+    </div>
+
+    <!-- Settings Screen -->
+    <div id="settings-screen" class="screen hidden">
+        <div class="window-box hud-interactive">
+            <h3>Cài Đặt Đồ Họa & Âm Thanh</h3>
+            <label>Khoảng nhìn Chunk: <span id="render-dist-val">4</span></label>
+            <input type="range" id="render-dist" min="2" max="8" value="4" oninput="document.getElementById('render-dist-val').innerText=this.value">
+            <label><input type="checkbox" id="audio-toggle" checked> Bật Âm thanh Hiệu ứng</label>
+            <button class="btn" style="align-self: center; margin-top: 20px;" onclick="game.closeSettings()">Quay Lại</button>
+        </div>
+    </div>
+
+    <!-- Load Modules Script -->
+    <script src="constants.js"></script>
+    <script src="engine3d.js"></script>
+    <script src="player.js"></script>
+    <script src="ui.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

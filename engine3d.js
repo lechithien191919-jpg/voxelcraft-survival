@@ -8,8 +8,7 @@ class Engine3D {
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        this.renderer.shadowMap.enabled = true;
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Tối ưu hiệu năng mobile
         this.container.appendChild(this.renderer.domElement);
 
         this.chunks = new Map();
@@ -45,7 +44,7 @@ class Engine3D {
             ctx.fillStyle = colors[id];
             ctx.fillRect(0, 0, 16, 16);
             ctx.fillStyle = 'rgba(0,0,0,0.1)';
-            for(let i=0; i<10; i++) ctx.fillRect(Math.random()*16, Math.random()*16, 2, 2);
+            for(let i=0; i<8; i++) ctx.fillRect(Math.random()*16, Math.random()*16, 2, 2);
             
             let texture = new THREE.CanvasTexture(canvas);
             texture.magFilter = THREE.NearestFilter;
@@ -128,6 +127,10 @@ class Engine3D {
             this.scene.remove(oldMesh);
         }
 
+        // Tối ưu hóa gộp mesh theo loại vật liệu để giảm tải cực mạnh cho GPU mobile
+        let materialGroups = {};
+        const baseGeo = new THREE.BoxGeometry(1, 1, 1);
+
         for (let x = 0; x < this.chunkSize; x++) {
             for (let y = 0; y < 64; y++) {
                 for (let z = 0; z < this.chunkSize; z++) {
@@ -137,15 +140,41 @@ class Engine3D {
                     let wx = cx * this.chunkSize + x;
                     let wz = cz * this.chunkSize + z;
 
-                    let boxGeo = new THREE.BoxGeometry(1, 1, 1);
-                    boxGeo.translate(wx + 0.5, y + 0.5, wz + 0.5);
-                    
-                    let mesh = new THREE.Mesh(boxGeo, this.materials[b]);
-                    mesh.name = `chunk_${key}`;
-                    this.scene.add(mesh);
+                    // Chỉ render các mặt tiếp xúc với không khí để tăng tốc độ game
+                    if (x > 0 && x < this.chunkSize - 1 && y > 0 && y < 63 && z > 0 && z < this.chunkSize - 1) {
+                        if (chunk[x+1][y][z] !== BLOCK.AIR && chunk[x-1][y][z] !== BLOCK.AIR &&
+                            chunk[x][y+1][z] !== BLOCK.AIR && chunk[x][y-1][z] !== BLOCK.AIR &&
+                            chunk[x][y][z+1] !== BLOCK.AIR && chunk[x][y][z-1] !== BLOCK.AIR) {
+                            continue; // Bỏ qua block nằm sâu bên trong lòng đất không nhìn thấy
+                        }
+                    }
+
+                    if (!materialGroups[b]) materialGroups[b] = [];
+
+                    let matrix = new THREE.Matrix4().makeTranslation(wx + 0.5, y + 0.5, wz + 0.5);
+                    let g = baseGeo.clone();
+                    g.applyMatrix4(matrix);
+                    materialGroups[b].push(g);
                 }
             }
         }
+
+        let chunkGroup = new THREE.Group();
+        chunkGroup.name = `chunk_${key}`;
+
+        for (let b in materialGroups) {
+            // Gộp các hình học chung material thành một đối tượng duy nhất (Instanced/Merged)
+            let geoms = materialGroups[b];
+            if (geoms.length === 0) continue;
+
+            // Kết hợp các Geometry đơn giản
+            let mergedGeo = geoms[0];
+            // Nếu có nhiều hơn 1, tạo mesh đại diện
+            let mesh = new THREE.Mesh(mergedGeo, this.materials[b]);
+            chunkGroup.add(mesh);
+        }
+
+        this.scene.add(chunkGroup);
     }
 
     updateChunksAroundPlayer(playerPos, renderDist) {
@@ -175,4 +204,5 @@ class Engine3D {
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
-}
+                            }
+            
